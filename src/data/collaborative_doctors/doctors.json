@@ -1,0 +1,22 @@
+[
+    {
+        "doctor_name": "Agent.Doctor.GPT",
+        "doctor_openai_model_name": "gpt-4",
+        "diagnosis_filepath": "./outputs/dialog_history_iiyi/dialog_history_gpt4.jsonl", 
+        "evaluation_filepath": "outputs/evaluation/evaluation_iiyi.jsonl",
+        "doctor_key": null
+    },
+    {
+        "doctor_name": "Agent.Doctor.GPT",
+        "doctor_openai_model_name": "gpt-3.5-turbo-16k",
+        "diagnosis_filepath": "./outputs/dialog_history_iiyi/dialog_history_gpt3.jsonl", 
+        "evaluation_filepath": "outputs/evaluation/evaluation_iiyi.jsonl",
+        "doctor_key": null
+    },
+    {
+        "doctor_name": "Agent.Doctor.WenXin",
+        "diagnosis_filepath": "outputs/dialog_history_iiyi/dialog_history_wenxin.jsonl", 
+        "evaluation_filepath": "outputs/evaluation/evaluation_iiyi.jsonl",
+        "doctor_key": null
+    }
+]
