@@ -6,7 +6,6 @@ import jsonlines
 from tqdm import tqdm
 import time
 import random
-# mport sys
 import concurrent
 import copy
 from utils.register import registry, register_class

@@ -4,7 +4,6 @@ import agents
 import hospital
 import utils
 from utils.options import get_parser
-# from hospital.consultation import Consultation
 
 
 if __name__ == '__main__':

@@ -5,10 +5,8 @@ from typing import List
 import jsonlines
 from tqdm import tqdm
 import time
-# import sys
 import concurrent
 import random
-# sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.register import register_class, registry
 
 
@@ -33,9 +31,7 @@ class Consultation:
     
         self.reporter = registry.get_class(args.reporter)(args)
 
-        # self.docter.doctor_greet = "您好，有哪里不舒服？"
-        # self.patient_summary_query = "您能分别总结一下诊断结果和对应的诊断依据，以及您给出的治疗方案吗？"
-        self.patient_summary_query = \
+        self.medical_director_summary_query = \
             "您能分别总结一下病人的症状和辅助检查的结果，然后给出您的诊断结果、诊断依据和治疗方案吗？" + \
             "按照下面的格式给出。\n\n" + \
             "#症状#\n(1)xx\n(2)xx\n\n" + \
@@ -143,7 +139,7 @@ class Consultation:
                 print(dialog_history[-1]["turn"], dialog_history[-1]["role"])
                 print(dialog_history[-1]["content"])
         
-        doctor_response = self.doctor.speak(self.patient_summary_query, patient.id)
+        doctor_response = self.doctor.speak(self.medical_director_summary_query, patient.id)
         dialog_history.append({"turn": turn+1, "role": "Doctor", "content": doctor_response})
         if self.ff_print:
             print("--------------------------------------")
@@ -163,8 +159,6 @@ class Consultation:
             "time": self.start_time,
         }
         self.save_dialog_info(dialog_info)
-        # save dialog_history
-        # self.debug(patient=patient, doctor=self.doctor)
     
     def save_dialog_info(self, dialog_info):
         with jsonlines.open(self.save_path, "a") as f:

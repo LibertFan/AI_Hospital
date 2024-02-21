@@ -11,7 +11,6 @@ class ChatGLMEngine(Engine):
         self.temperature = temperature
         self.top_p = top_p
         self.incremental = incremental
-        # self.system_message = system_message
 
     def get_response(self, messages):
         response = zhipuai.model_api.sse_invoke(

@@ -33,9 +33,7 @@ class Doctor(Agent):
         def default_diagnosis_factory():
             return {}
         self.diagnosis = defaultdict(default_diagnosis_factory) 
-        # super(Doctor, self).__init__(engine)
 
-    # @abstractmethod
     def get_response(self, messages):
         response = self.engine.get_response(messages)
         return response
@@ -245,7 +243,6 @@ class Doctor(Agent):
             diagnosis=responese,
             patient_id=patient.id
         )
-
 
 
 @register_class(alias="Agent.Doctor.GPT")

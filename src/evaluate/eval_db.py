@@ -12,7 +12,6 @@ import random
 from collections import defaultdict
 from prettytable import PrettyTable
 import concurrent
-from mit import mit_spider_openai
 import jsonlines
 
 
@@ -71,10 +70,8 @@ class DBEvaluator:
         for doctor_name, doctor_diagnosis_filepath in self.doctors:
             self.doctor_name_to_diagnosis[doctor_name] = self.load_doctor_diagnosis(doctor_diagnosis_filepath)
         self.doctor_names = list(self.doctor_name_to_diagnosis.keys())
-        print("doctor_names: ", self.doctor_names)
 
     def parse_diagnosis(self):
-        print("parse_diagnosis")
 
         processed_doctor_name_w_patient_id = {}
         if os.path.exists(self.eval_save_filepath):
@@ -145,7 +142,7 @@ class DBEvaluator:
             outfile.write(json.dumps(result, ensure_ascii=False)+'\n')
         outfile.close()
 
-    def evaluate(self, reform=False, search=False):
+    def evaluate(self):
 
         # eval
         def set_match(pred, refs, matched):
@@ -158,35 +155,6 @@ class DBEvaluator:
                         if p == r and matched[idx] == 0:
                             return_idx = idx
             return return_idx
-        
-        def id_match(pred, refs, matched):
-            # only consider disease id before / and + , ignore * 
-            pred_set1 = [p[1] for p in pred]
-            pred_set2 = [p[1].split('+')[0].split('/')[0].strip('*').split('.')[0] for p in pred]
-            pred_set3 = [p[1][0] for p in pred]
-
-            return_idx = None
-            return_value = None
-            for idx, ref in enumerate(refs):
-                ref_set1 = [r[1] for r in ref]
-                ref_set2 = [r[1].split('+')[0].split('/')[0].strip('*').split('.')[0] for r in ref]
-                ref_set3 = [r[1][0] for r in ref]
-                for p in pred_set1:
-                    for r in ref_set1:
-                        if p == r and matched[idx] < 1: 
-                            return_idx = idx
-                            return_value = 1
-                for p in pred_set2:
-                    for r in ref_set2:
-                        if p == r and matched[idx] < 1: 
-                            return_idx = idx
-                            return_value = 1
-                for p in pred_set3:
-                    for r in ref_set3:
-                        if p == r and matched[idx] < 1: 
-                            return_idx = idx
-                            return_value = 1
-            return return_idx, return_value
                 
         results = defaultdict(list)
         with open(self.eval_save_filepath) as inputfile:
@@ -195,7 +163,7 @@ class DBEvaluator:
                 results[line['doctor_name']].append(line)
         inputfile.close()
         
-        table = PrettyTable(['模型','评测病人数量','平均预测疾病数量','Set Recall','Set Precision','Set F1','ID Recall','ID Precision','ID F1'])
+        table = PrettyTable(['模型','评测病人数量','平均预测疾病数量','Set Recall','Set Precision','Set F1'])
         for model in results.keys():
             # Like Span-level F1
             patient_num = 0
@@ -205,9 +173,6 @@ class DBEvaluator:
             false_positive = 0
             false_negitative = 0
 
-            id_true_positive = 0.00001 # smooth
-            id_false_positive = 0
-            id_false_negitative = 0
             for data in results[model]:
                 if data["patient_id"] not in self.patient_ids:
                     continue
@@ -215,39 +180,29 @@ class DBEvaluator:
                 refs = [[n for n in m if n[2] >= args.threshold] for m in data['reference_diagnosis_match']]
                 preds = [[n for n in m if n[2] >= args.threshold] for m in data['doctor_diagnosis_match']]
                 set_matched = [0] * len(refs)
-                id_matched = [0] * len(refs)
                 for pred in preds:
                     set_match_idx = set_match(pred, refs, set_matched)
                     if set_match_idx is None: false_positive += 1 # do not match
                     elif set_matched[set_match_idx] == 1: false_positive += 1 # can not match more than one times
                     else: set_matched[set_match_idx] = 1 # first match
 
-                    id_match_idx, id_match_value = id_match(pred, refs, id_matched)
-                    if id_match_idx is None: id_false_positive += 1 # do not match
-                    elif id_matched[id_match_idx] >= id_match_value: id_false_positive += 1 # can not match more than one times
-                    else: id_matched[id_match_idx] = id_match_value # first match
                 disease_num += len(preds)
                 true_positive += sum(set_matched)
                 false_negitative += (len(refs) - sum(set_matched))
-                id_true_positive += sum(id_matched)
-                id_false_negitative += (len(refs) - sum(id_matched))
 
             set_recall = true_positive / (true_positive + false_negitative)
             set_precision = true_positive / (true_positive + false_positive)
             set_f1 = set_precision * set_recall * 2 / (set_recall + set_precision)
 
-            id_set_recall = id_true_positive / (id_true_positive + id_false_negitative)
-            id_set_precision = id_true_positive / (id_true_positive + id_false_positive)
-            id_set_f1 = id_set_precision * id_set_recall * 2 / (id_set_recall + id_set_precision)
-
             table.add_row([
                 model, patient_num, 
                 "{:.2f}".format(disease_num/patient_num),
-                "{:.2f}".format(set_recall*100), "{:.2f}".format(set_precision*100), "{:.2f}".format(set_f1*100),
-                "{:.2f}".format(id_set_recall*100), "{:.2f}".format(id_set_precision*100), "{:.2f}".format(id_set_f1*100)
+                "{:.2f}".format(set_recall*100), 
+                "{:.2f}".format(set_precision*100), 
+                "{:.2f}".format(set_f1*100),
             ])
                 
-        print (table)
+        print(table)
 
     def load_reference_diagnosis(self, reference_diagnosis_filepath):
         with open(reference_diagnosis_filepath, 'r') as f:
